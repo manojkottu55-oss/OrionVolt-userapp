@@ -159,8 +159,9 @@ h1, h2, h3, h4, h5, h6 {
     padding: 1rem;
     margin-bottom: 1rem;
   }
-  .btn, .input-field {
-    min-height: 44px;
+  .btn, .input-field, select.input-field {
+    min-height: 48px !important; /* Enhanced touch target */
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
   }
   h1 { font-size: 1.5rem; }
   h2 { font-size: 1.25rem; }
@@ -185,5 +186,11 @@ h1, h2, h3, h4, h5, h6 {
   
   .charging-modes-container {
     flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Ensure mode cards take full width when stacked */
+  .charging-modes-container > div {
+    width: 100% !important;
   }
 }

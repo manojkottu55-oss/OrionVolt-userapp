@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Zap, Banknote, Percent, BatteryFull, CheckCircle } from 'lucide-react';
-import axios from 'axios';
+import api from '../api';
 
 const ModeCard = ({ title, subtitle, icon, selected, onClick }) => (
   <div 
@@ -59,7 +59,7 @@ const Charge = () => {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/vehicles');
+        const response = await api.get('/vehicles');
         if (response.data && response.data.vehicles) {
           setVehicles(response.data.vehicles);
         }
@@ -103,7 +103,7 @@ const Charge = () => {
 
     setCalculating(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/charge/calculate', {
+      const response = await api.post('/charge/calculate', {
         vehicleId: form.vehicleId,
         chargingMode: form.chargingMode,
         amount: form.amount,
