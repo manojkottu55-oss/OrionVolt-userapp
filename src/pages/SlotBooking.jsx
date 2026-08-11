@@ -141,7 +141,7 @@ const SlotBooking = () => {
         <h2 style={{ marginBottom: '1.5rem' }}>My Bookings</h2>
         
         {bookings.length === 0 ? (
-          <div className="text-muted text-center" style={{ padding: '2rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '1rem', border: '1px dashed var(--border)' }}>
+          <div className="text-muted text-center" style={{ padding: '2rem', backgroundColor: 'var(--hover-bg)', borderRadius: '1rem', border: '1px dashed var(--border)' }}>
             No bookings yet. Reserve a slot above.
           </div>
         ) : (
@@ -168,7 +168,7 @@ const SlotBooking = () => {
                     fontWeight: 600,
                     padding: '0.25rem 0.5rem',
                     borderRadius: '99px',
-                    backgroundColor: booking.status === 'Upcoming' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    backgroundColor: booking.status === 'Upcoming' ? 'var(--primary-alpha)' : 'var(--danger-alpha)',
                     color: booking.status === 'Upcoming' ? 'var(--primary)' : 'var(--danger)'
                   }}>
                     {booking.status}
@@ -203,7 +203,7 @@ const SlotBooking = () => {
           style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backgroundColor: 'var(--shadow-color)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
@@ -304,7 +304,7 @@ const SlotBooking = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          boxShadow: '0 4px 12px var(--shadow-color)',
           color: 'var(--text-light)',
           zIndex: 2000,
           animation: 'slideIn 0.3s ease-out'
@@ -334,11 +334,11 @@ const SlotBooking = () => {
           .kiosk-grid { grid-template-columns: 1fr; }
         }
         .kiosk-card:hover {
-          box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+          box-shadow: 0 0 15px var(--primary-alpha);
           transform: translateY(-2px);
         }
         .kiosk-card.Occupied:hover {
-          box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+          box-shadow: 0 0 15px var(--danger-alpha);
         }
       `}} />
     </div>

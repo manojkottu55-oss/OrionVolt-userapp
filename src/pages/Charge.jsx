@@ -4,32 +4,18 @@ import { MapPin, Zap, Banknote, Percent, BatteryFull, CheckCircle } from 'lucide
 import api from '../api';
 
 const ModeCard = ({ title, subtitle, icon, selected, onClick }) => (
-  <div 
+  <div
     onClick={onClick}
-    style={{
-      flex: '1 1 0',
-      minWidth: '140px',
-      padding: '1rem',
-      borderRadius: '8px',
-      border: `2px solid ${selected ? 'var(--primary)' : 'var(--border)'}`,
-      backgroundColor: selected ? 'rgba(0, 212, 138, 0.1)' : 'transparent',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      textAlign: 'center',
-      gap: '0.5rem'
-    }}
+    className={`mode-card ${selected ? 'selected' : ''}`}
   >
-    <div style={{ color: selected ? 'var(--primary)' : 'var(--text-muted)' }}>
+    <div className="mode-card-icon">
       {icon}
     </div>
     <div>
-      <div style={{ fontWeight: 600, color: selected ? 'var(--primary)' : 'var(--text)', marginBottom: '0.25rem' }}>
+      <div className="mode-card-title">
         {title}
       </div>
-      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.2' }}>
+      <div className="mode-card-subtitle">
         {subtitle}
       </div>
     </div>
@@ -41,12 +27,12 @@ const Charge = () => {
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [vehicles, setVehicles] = useState([]);
   const [calculationResult, setCalculationResult] = useState(null);
-  
+
   const [form, setForm] = useState({
-    kioskId: localStorage.getItem('currentKioskId') || 'KIOSK-001',
+    kioskId: 'KSK001',
     vehicleType: '',
     company: '',
     vehicleId: '',
@@ -72,22 +58,22 @@ const Charge = () => {
 
   // Compute dynamic dropdown options
   const uniqueTypes = [...new Set(vehicles.map(v => v.type))];
-  const uniqueCompanies = form.vehicleType 
+  const uniqueCompanies = form.vehicleType
     ? [...new Set(vehicles.filter(v => v.type === form.vehicleType).map(v => v.make))]
     : [];
-  const availableModels = form.company 
+  const availableModels = form.company
     ? vehicles.filter(v => v.make === form.company && v.type === form.vehicleType)
     : [];
 
   const handleCalculate = async () => {
     setError('');
     setCalculationResult(null);
-    
+
     if (!form.vehicleId) {
       setError('Please select a specific vehicle model.');
       return;
     }
-    
+
     if (form.chargingMode === 'amount' && !form.amount) {
       setError('Please enter a target amount.');
       return;
@@ -121,7 +107,7 @@ const Charge = () => {
   const handleChargeInit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     // Basic validation
     if (!calculationResult) {
       setError('Please calculate the estimate before continuing.');
@@ -131,15 +117,36 @@ const Charge = () => {
     setLoading(true);
 
     try {
-      // NOTE: Real backend calculation and session initialization will be wired here in the next task.
-      // For now, we simulate success and move to the mock payment flow to validate UI.
-      setTimeout(() => {
-        // Generating a dummy session ID for UI flow testing
-        const dummySessionId = 'SESSION-' + Math.floor(Math.random() * 1000000);
-        navigate(`/payment/${dummySessionId}`);
-      }, 500);
+      // Create a real session on the backend with vehicle & calculation data
+      const selectedVehicle = vehicles.find(v => String(v.id) === String(form.vehicleId));
+
+      const sessionPayload = {
+        kioskId: form.kioskId,
+        vehicleType: selectedVehicle?.type || form.vehicleType,
+        vehicleId: form.vehicleId,
+        energy: calculationResult.targetEnergyKwh,
+        targetType: form.chargingMode === 'amount' ? 'amount' : 'energy',
+        targetValue: form.chargingMode === 'amount'
+          ? parseFloat(form.amount)
+          : calculationResult.targetEnergyKwh
+      };
+
+      const res = await api.post('/signin/session', sessionPayload);
+
+      if (res.data?.success && res.data?.session?.session_id) {
+        navigate(`/upi-payment/${res.data.session.session_id}`, {
+          state: {
+            amount: calculationResult.estimatedAmount,
+            vehicleModel: selectedVehicle?.model || form.vehicleType,
+          }
+        });
+      } else {
+        setError('Failed to create charging session. Please try again.');
+        setLoading(false);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to initialize charging');
+      console.error('Session creation error:', err);
+      setError(err.response?.data?.error || 'Failed to initialize charging session');
       setLoading(false);
     }
   };
@@ -147,8 +154,8 @@ const Charge = () => {
   return (
     <div className="page-content">
       <div className="flex items-center justify-between mb-6">
-        <h1 style={{margin: 0}}>Charge EV</h1>
-        <div className="flex items-center gap-2 text-muted" style={{fontSize: '0.875rem'}}>
+        <h1 style={{ margin: 0 }}>Charge EV</h1>
+        <div className="flex items-center gap-2 text-muted" style={{ fontSize: '0.875rem' }}>
           <MapPin size={16} />
           {form.kioskId}
         </div>
@@ -156,20 +163,20 @@ const Charge = () => {
 
       <div className="card">
         {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.875rem', fontWeight: '500' }}>{error}</div>}
-        
+
         <form onSubmit={handleChargeInit}>
-          
+
           {/* VEHICLE SELECTION */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text)' }}>1. Vehicle Selection</h3>
-            
+
             <div className="input-group">
               <label className="input-label">Vehicle Type</label>
-              <select 
+              <select
                 className="input-field"
                 value={form.vehicleType}
                 onChange={e => {
-                  setForm({...form, vehicleType: e.target.value, company: '', vehicleId: ''});
+                  setForm({ ...form, vehicleType: e.target.value, company: '', vehicleId: '' });
                   setCalculationResult(null);
                 }}
               >
@@ -183,11 +190,11 @@ const Charge = () => {
             {form.vehicleType && (
               <div className="input-group" style={{ marginTop: '1rem' }}>
                 <label className="input-label">Company</label>
-                <select 
+                <select
                   className="input-field"
                   value={form.company}
                   onChange={e => {
-                    setForm({...form, company: e.target.value, vehicleId: ''});
+                    setForm({ ...form, company: e.target.value, vehicleId: '' });
                     setCalculationResult(null);
                   }}
                 >
@@ -202,11 +209,11 @@ const Charge = () => {
             {form.company && (
               <div className="input-group" style={{ marginTop: '1rem' }}>
                 <label className="input-label">Model</label>
-                <select 
+                <select
                   className="input-field"
                   value={form.vehicleId}
                   onChange={e => {
-                    setForm({...form, vehicleId: e.target.value});
+                    setForm({ ...form, vehicleId: e.target.value });
                     setCalculationResult(null);
                   }}
                 >
@@ -222,28 +229,28 @@ const Charge = () => {
           {/* CHARGING GOAL */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text)' }}>2. Charging Goal</h3>
-            
+
             <div className="charging-modes-container" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <ModeCard 
-                title="Amount Mode" 
+              <ModeCard
+                title="Amount Mode"
                 subtitle="Charge for a specific amount"
-                icon={<Banknote size={24} />} 
-                selected={form.chargingMode === 'amount'} 
-                onClick={() => setForm({...form, chargingMode: 'amount', targetBatteryPct: ''})} 
+                icon={<Banknote size={24} />}
+                selected={form.chargingMode === 'amount'}
+                onClick={() => setForm({ ...form, chargingMode: 'amount', targetBatteryPct: '' })}
               />
-              <ModeCard 
-                title="Percentage Mode" 
+              <ModeCard
+                title="Percentage Mode"
                 subtitle="Charge to a target battery %"
-                icon={<Percent size={24} />} 
-                selected={form.chargingMode === 'percentage'} 
-                onClick={() => setForm({...form, chargingMode: 'percentage', amount: ''})} 
+                icon={<Percent size={24} />}
+                selected={form.chargingMode === 'percentage'}
+                onClick={() => setForm({ ...form, chargingMode: 'percentage', amount: '' })}
               />
-              <ModeCard 
-                title="Full Charge" 
+              <ModeCard
+                title="Full Charge"
                 subtitle="Charge to 100%"
-                icon={<BatteryFull size={24} />} 
-                selected={form.chargingMode === 'full_charge'} 
-                onClick={() => setForm({...form, chargingMode: 'full_charge', amount: '', targetBatteryPct: '100'})} 
+                icon={<BatteryFull size={24} />}
+                selected={form.chargingMode === 'full_charge'}
+                onClick={() => setForm({ ...form, chargingMode: 'full_charge', amount: '', targetBatteryPct: '100' })}
               />
             </div>
 
@@ -256,7 +263,7 @@ const Charge = () => {
                   className="input-field"
                   placeholder="Enter amount (e.g. 150)"
                   value={form.amount}
-                  onChange={e => setForm({...form, amount: e.target.value})}
+                  onChange={e => setForm({ ...form, amount: e.target.value })}
                 />
               </div>
             )}
@@ -270,7 +277,7 @@ const Charge = () => {
                     className="input-field"
                     placeholder="e.g. 20"
                     value={form.currentBatteryPct}
-                    onChange={e => setForm({...form, currentBatteryPct: e.target.value})}
+                    onChange={e => setForm({ ...form, currentBatteryPct: e.target.value })}
                   />
                 </div>
                 <div className="input-group" style={{ flex: '1 1 120px' }}>
@@ -280,7 +287,7 @@ const Charge = () => {
                     className="input-field"
                     placeholder="e.g. 80"
                     value={form.targetBatteryPct}
-                    onChange={e => setForm({...form, targetBatteryPct: e.target.value})}
+                    onChange={e => setForm({ ...form, targetBatteryPct: e.target.value })}
                   />
                 </div>
               </div>
@@ -295,16 +302,16 @@ const Charge = () => {
                   placeholder="e.g. 20"
                   value={form.currentBatteryPct}
                   onChange={e => {
-                    setForm({...form, currentBatteryPct: e.target.value});
+                    setForm({ ...form, currentBatteryPct: e.target.value });
                     setCalculationResult(null);
                   }}
                 />
               </div>
             )}
 
-            <button 
-              type="button" 
-              className="btn" 
+            <button
+              type="button"
+              className="btn"
               style={{ width: '100%', marginTop: '1rem', backgroundColor: 'var(--card-lighter)' }}
               onClick={handleCalculate}
               disabled={calculating}
@@ -315,8 +322,8 @@ const Charge = () => {
 
           {calculationResult && (
             <div style={{
-              backgroundColor: 'rgba(0, 212, 138, 0.05)',
-              border: '1px solid rgba(0, 212, 138, 0.2)',
+              backgroundColor: 'var(--primary-alpha)',
+              border: '1px solid var(--primary)',
               borderRadius: '8px',
               padding: '1.25rem',
               marginBottom: '2rem'
@@ -325,7 +332,7 @@ const Charge = () => {
                 <CheckCircle size={20} color="var(--primary)" />
                 <h4 style={{ margin: 0, color: 'var(--primary)' }}>Calculation Successful</h4>
               </div>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target Energy</div>
@@ -340,9 +347,9 @@ const Charge = () => {
                   <div style={{ fontWeight: '600' }}>{calculationResult.estimatedTimeMinutes} mins</div>
                 </div>
               </div>
-              
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '4px' }}>
-                <strong>Breakdown:</strong><br/>
+
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', backgroundColor: 'var(--input-bg)', padding: '0.75rem', borderRadius: '4px' }}>
+                <strong>Breakdown:</strong><br />
                 {calculationResult.breakdown.split('\n').map((line, i) => (
                   <div key={i}>{line}</div>
                 ))}

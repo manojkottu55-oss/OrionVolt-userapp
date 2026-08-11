@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Zap, BatteryCharging, History, CreditCard, RotateCcw, MessageSquare, User, HelpCircle, LogOut, Calendar, Leaf, Menu, X } from 'lucide-react';
+import { Zap, BatteryCharging, History, CreditCard, RotateCcw, MessageSquare, User, HelpCircle, LogOut, Calendar, Leaf, Menu, X, Settings, Moon, Sun } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import './Layout.css';
 
 const Layout = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -25,6 +27,7 @@ const Layout = () => {
     { to: '/refunds', icon: <RotateCcw size={24} />, label: 'Refunds' },
     { to: '/feedback', icon: <MessageSquare size={24} />, label: 'Feedback' },
     { to: '/profile', icon: <User size={24} />, label: 'Profile' },
+    { to: '/settings', icon: <Settings size={24} />, label: 'Settings' },
     { to: '/support', icon: <HelpCircle size={24} />, label: 'Support' }
   ];
 
@@ -92,6 +95,32 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main className="main-content">
+        <button 
+          onClick={toggleTheme}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            zIndex: 50,
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-main)',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 6px var(--shadow-color)',
+            transition: 'background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease'
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          title="Toggle Theme"
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
         <Outlet />
       </main>
     </div>

@@ -56,13 +56,13 @@ const Profile = () => {
   const inputStyle = {
     padding: '0.8rem 1rem',
     borderRadius: '12px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    background: 'rgba(255, 255, 255, 0.03)',
-    color: 'var(--text)',
+    border: '1px solid var(--border-light)',
+    background: 'var(--input-bg)',
+    color: 'var(--text-light)',
     outline: 'none',
     transition: 'border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
     fontSize: '1rem',
-    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: 'inset 0 2px 4px var(--shadow-color)',
   };
 
   const labelStyle = {
@@ -92,7 +92,7 @@ const Profile = () => {
       {/* Decorative Background Bloom */}
       <div style={{
         position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)',
-        width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+        width: '300px', height: '300px', background: 'radial-gradient(circle, var(--primary-alpha) 0%, transparent 70%)',
         zIndex: 0, pointerEvents: 'none'
       }}></div>
 
@@ -108,10 +108,10 @@ const Profile = () => {
       <div className="card max-w-md mx-auto" style={{ 
         padding: '2.5rem', 
         borderRadius: '24px',
-        background: 'rgba(30, 41, 59, 0.6)',
+        background: 'var(--glass-bg)',
         backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        border: '1px solid var(--border-light)',
+        boxShadow: '0 25px 50px -12px var(--shadow-color)',
         position: 'relative', zIndex: 1
       }}>
         {user?.user_metadata?.avatar_url && (
@@ -121,7 +121,7 @@ const Profile = () => {
               padding: '4px',
               background: 'linear-gradient(135deg, var(--primary), #3b82f6)',
               borderRadius: '50%',
-              boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)'
+              boxShadow: '0 0 20px var(--primary-alpha)'
             }}>
               <img 
                 src={user.user_metadata.avatar_url} 
@@ -158,7 +158,7 @@ const Profile = () => {
               type="email" 
               name="email"
               className="input-focus-ring"
-              style={{...inputStyle, background: 'rgba(255,255,255,0.01)', opacity: 0.6, cursor: user?.email ? 'not-allowed' : 'text'}}
+              style={{...inputStyle, background: 'var(--hover-bg-subtle)', opacity: 0.6, cursor: user?.email ? 'not-allowed' : 'text'}}
               placeholder="Your email address"
               value={formData.email}
               onChange={handleChange}
@@ -237,8 +237,8 @@ const Profile = () => {
       <style>{`
         .input-focus-ring:focus {
           border-color: var(--primary) !important;
-          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
-          background: rgba(255, 255, 255, 0.06) !important;
+          box-shadow: 0 0 0 4px var(--primary-alpha) !important;
+          background: var(--hover-bg) !important;
         }
       `}</style>
     </div>

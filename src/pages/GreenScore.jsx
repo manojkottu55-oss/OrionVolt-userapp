@@ -92,7 +92,7 @@ const GreenScore = () => {
                   <stop offset="100%" stopColor="#00bcd4" />
                 </linearGradient>
               </defs>
-              <circle cx="80" cy="80" r={radius} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+              <circle cx="80" cy="80" r={radius} fill="none" stroke="var(--border-light)" strokeWidth="12" />
               <circle 
                 cx="80" cy="80" r={radius} fill="none" 
                 stroke="url(#greenGradient)" 
@@ -236,9 +236,9 @@ const GreenScore = () => {
 
               <div style={{ 
                 padding: '1rem', 
-                backgroundColor: 'rgba(0, 230, 118, 0.1)', 
+                backgroundColor: 'var(--primary-alpha)', 
                 borderRadius: '8px',
-                border: '1px solid rgba(0, 230, 118, 0.3)',
+                border: '1px solid var(--primary)',
                 textAlign: 'center',
                 marginTop: '1rem'
               }}>
@@ -297,8 +297,8 @@ const GreenScore = () => {
           flex-direction: column;
           align-items: center;
           padding: 3rem 2rem;
-          background: radial-gradient(circle at center, rgba(0, 230, 118, 0.1) 0%, var(--card-bg) 60%);
-          border: 1px solid rgba(0, 230, 118, 0.2);
+          background: radial-gradient(circle at center, var(--primary-alpha) 0%, var(--card-bg) 60%);
+          border: 1px solid var(--border-light);
         }
 
         .score-ring-container {
@@ -345,7 +345,7 @@ const GreenScore = () => {
           width: 100%;
           max-width: 300px;
           height: 8px;
-          background: rgba(255,255,255,0.1);
+          background: var(--hover-bg);
           border-radius: 4px;
           margin: 0 auto;
           overflow: hidden;
@@ -366,8 +366,8 @@ const GreenScore = () => {
         }
 
         .breakdown-card {
-          border: 1px solid rgba(0, 230, 118, 0.3);
-          box-shadow: 0 0 20px rgba(0, 230, 118, 0.05);
+          border: 1px solid var(--border);
+          box-shadow: 0 0 20px var(--shadow-color);
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -385,13 +385,13 @@ const GreenScore = () => {
           flex-direction: column;
           align-items: center;
           padding: 1rem;
-          background: rgba(0,0,0,0.2);
+          background: var(--input-bg);
           border-radius: 12px;
         }
 
         .highlight-col {
-          background: rgba(0, 230, 118, 0.1);
-          border: 1px solid rgba(0, 230, 118, 0.2);
+          background: var(--primary-alpha);
+          border: 1px solid var(--primary);
         }
 
         .stat-val {
@@ -415,7 +415,7 @@ const GreenScore = () => {
         .step-card {
           flex: 1;
           background: var(--card-bg);
-          border: 1px solid rgba(255,255,255,0.05);
+          border: 1px solid var(--border-light);
           border-radius: 12px;
           padding: 1.5rem;
           text-align: center;
@@ -424,7 +424,7 @@ const GreenScore = () => {
         .step-icon {
           width: 48px;
           height: 48px;
-          background: rgba(0, 230, 118, 0.1);
+          background: var(--primary-alpha);
           color: var(--primary);
           border-radius: 50%;
           display: flex;
@@ -461,7 +461,7 @@ const GreenScore = () => {
           top: 0;
           bottom: 0;
           width: 2px;
-          background: rgba(0, 230, 118, 0.3);
+          background: var(--border);
         }
 
         .timeline-item {
@@ -501,8 +501,8 @@ const GreenScore = () => {
         }
 
         .leaderboard-card {
-          border: 1px solid rgba(0, 230, 118, 0.3);
-          box-shadow: 0 0 20px rgba(0, 230, 118, 0.05);
+          border: 1px solid var(--border);
+          box-shadow: 0 0 20px var(--shadow-color);
           position: sticky;
           top: 20px;
         }
@@ -512,7 +512,7 @@ const GreenScore = () => {
           flex-direction: column;
           margin-bottom: 1.25rem;
           padding-bottom: 1.25rem;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid var(--border-light);
         }
 
         .lb-stat:last-child {
@@ -545,7 +545,7 @@ const GreenScore = () => {
           display: flex;
           align-items: center;
           gap: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 12px var(--shadow-color);
           color: var(--text-light);
           z-index: 2000;
           animation: slideIn 0.3s ease-out;

@@ -94,23 +94,23 @@ const Feedback = () => {
                 resize: 'vertical',
                 padding: '1rem',
                 borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255, 255, 255, 0.03)',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                border: '1px solid var(--border)',
+                background: 'var(--input-bg)',
+                boxShadow: 'inset 0 2px 4px var(--shadow-color)',
                 fontSize: '1rem',
-                color: 'var(--text)',
+                color: 'var(--text-main)',
                 transition: 'border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
                 outline: 'none'
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = 'var(--primary)';
-                e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.2)';
-                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                e.target.style.boxShadow = '0 0 0 3px var(--primary-alpha)';
+                e.target.style.background = 'var(--hover-bg)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.1)';
-                e.target.style.background = 'rgba(255, 255, 255, 0.03)';
+                e.target.style.borderColor = 'var(--border)';
+                e.target.style.boxShadow = 'inset 0 2px 4px var(--shadow-color)';
+                e.target.style.background = 'var(--input-bg)';
               }}
               placeholder="What did you like? What can we improve?"
               value={feedbackText}
