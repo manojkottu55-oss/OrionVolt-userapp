@@ -39,9 +39,9 @@ const MOCK_DATA = {
   '/vehicles': {
     success: true,
     vehicles: [
-      { _id: 'v1', make: 'Ola', model: 'S1 Pro', type: 'two_wheeler', batteryCapacityKwh: 3.97 },
-      { _id: 'v2', make: 'Ather', model: '450X', type: 'two_wheeler', batteryCapacityKwh: 3.7 },
-      { _id: 'v3', make: 'Tata', model: 'Nexon EV', type: 'four_wheeler', batteryCapacityKwh: 40.5 },
+      { id: 'v1', make: 'Ola', model: 'S1 Pro', type: 'two_wheeler', batteryCapacityKwh: 3.97 },
+      { id: 'v2', make: 'Ather', model: '450X', type: 'two_wheeler', batteryCapacityKwh: 3.7 },
+      { id: 'v3', make: 'Tata', model: 'Nexon EV', type: 'four_wheeler', batteryCapacityKwh: 40.5 },
     ]
   },
   '/history': {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Zap, Banknote, Percent, BatteryFull, CheckCircle } from 'lucide-react';
 import api from '../api';
+import { useProfile } from '../context/ProfileContext';
 
 const ModeCard = ({ title, subtitle, icon, selected, onClick }) => (
   <div
@@ -24,6 +25,8 @@ const ModeCard = ({ title, subtitle, icon, selected, onClick }) => (
 
 const Charge = () => {
   const navigate = useNavigate();
+  const { vehicles: userVehicles } = useProfile();
+  
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState('');
@@ -55,6 +58,21 @@ const Charge = () => {
     };
     fetchVehicles();
   }, []);
+
+  // Pre-fill default vehicle if available
+  useEffect(() => {
+    if (userVehicles && userVehicles.length > 0 && !form.vehicleId && vehicles.length > 0) {
+      const defaultVehicle = userVehicles.find(v => v.is_default) || userVehicles[0];
+      
+      setForm(prev => ({
+        ...prev,
+        vehicleType: defaultVehicle.vehicle_type,
+        company: defaultVehicle.vehicle_make,
+        // Assuming user_vehicles vehicle_model stores the ID from vehicle_master based on the new implementation
+        vehicleId: defaultVehicle.vehicle_model 
+      }));
+    }
+  }, [userVehicles, vehicles]);
 
   // Compute dynamic dropdown options
   const uniqueTypes = [...new Set(vehicles.map(v => v.type))];
@@ -128,7 +146,8 @@ const Charge = () => {
         targetType: form.chargingMode === 'amount' ? 'amount' : 'energy',
         targetValue: form.chargingMode === 'amount'
           ? parseFloat(form.amount)
-          : calculationResult.targetEnergyKwh
+          : calculationResult.targetEnergyKwh,
+        estimatedTimeMinutes: calculationResult.estimatedTimeMinutes
       };
 
       const res = await api.post('/signin/session', sessionPayload);

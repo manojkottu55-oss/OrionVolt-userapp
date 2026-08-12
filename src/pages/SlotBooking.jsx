@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, X, CheckCircle, Zap } from 'lucide-react';
 
 const mockKiosks = [
@@ -10,17 +10,29 @@ const mockKiosks = [
   { id: 'KS006', location: 'EV Bay C', status: 'Occupied', estimatedFree: '6:00 PM' },
 ];
 
-const mockInitialBookings = [
-  { id: '#BK-001', kioskId: 'KS003', date: 'Today', time: '5:30 PM', duration: '30 min', vehicle: 'Ola S1 Pro', status: 'Upcoming' },
-  { id: '#BK-002', kioskId: 'KS002', date: 'Tomorrow', time: '10:00 AM', duration: '1 hour', vehicle: 'Ather 450X', status: 'Cancelled' },
-];
+import api from '../api';
 
 const SlotBooking = () => {
   const [kiosks] = useState(mockKiosks);
-  const [bookings, setBookings] = useState(mockInitialBookings);
+  const [bookings, setBookings] = useState([]);
   const [modalData, setModalData] = useState(null); // null means closed, object means open
   const [toast, setToast] = useState(false);
   const [formData, setFormData] = useState({ duration: '30 min', vehicle: '' });
+
+  const loadBookings = async () => {
+    try {
+      const res = await api.get('/bookings');
+      if (res.data && res.data.bookings) {
+        setBookings(res.data.bookings);
+      }
+    } catch (err) {
+      console.error('Failed to load bookings', err);
+    }
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
 
   const openModal = (kiosk) => {
     const isAvailable = kiosk.status === 'Available';
@@ -51,25 +63,38 @@ const SlotBooking = () => {
     setModalData(null);
   };
 
-  const handleConfirm = () => {
-    const newBooking = {
-      id: `#BK-00${bookings.length + 1}`,
-      kioskId: modalData.id,
-      date: modalData.date,
-      time: modalData.time,
-      duration: formData.duration,
-      vehicle: formData.vehicle || 'Unknown Vehicle',
-      status: 'Upcoming'
-    };
-    
-    setBookings([newBooking, ...bookings]);
-    setModalData(null);
-    setToast(true);
-    setTimeout(() => setToast(false), 3000);
+  const handleConfirm = async () => {
+    try {
+      const minutesMatch = formData.duration.match(/\d+/);
+      const minutes = formData.duration.includes('hour') 
+        ? (parseInt(minutesMatch[0]) * 60) 
+        : parseInt(minutesMatch[0]);
+
+      await api.post('/bookings', {
+        kioskId: modalData.id,
+        kioskName: `Kiosk ${modalData.id}`,
+        location: modalData.location,
+        bookingDate: modalData.date,
+        bookingTime: modalData.time,
+        durationMinutes: minutes,
+        vehicleModel: formData.vehicle
+      });
+      setModalData(null);
+      setToast(true);
+      setTimeout(() => setToast(false), 3000);
+      loadBookings();
+    } catch (err) {
+      console.error('Failed to create booking', err);
+    }
   };
 
-  const handleCancelBooking = (id) => {
-    setBookings(bookings.map(b => b.id === id ? { ...b, status: 'Cancelled' } : b));
+  const handleCancelBooking = async (id) => {
+    try {
+      await api.delete('/bookings/' + id);
+      loadBookings();
+    } catch (err) {
+      console.error('Failed to cancel booking', err);
+    }
   };
 
   return (
@@ -150,15 +175,15 @@ const SlotBooking = () => {
               <div key={booking.id} className="card" style={{ padding: '1.25rem', marginBottom: 0, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ flex: '1 1 200px' }}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span style={{ fontWeight: 600, color: 'var(--text-light)' }}>{booking.kioskId}</span>
-                    <span className="text-muted text-sm">({booking.id})</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-light)' }}>{booking.kiosk_id}</span>
+                    <span className="text-muted text-sm">(#{booking.id.substring(0,8)})</span>
                   </div>
                   <div className="text-muted text-sm flex items-center gap-3">
-                    <span className="flex items-center gap-1"><Calendar size={14}/> {booking.date}</span>
-                    <span className="flex items-center gap-1"><Clock size={14}/> {booking.time}</span>
+                    <span className="flex items-center gap-1"><Calendar size={14}/> {booking.booking_date}</span>
+                    <span className="flex items-center gap-1"><Clock size={14}/> {booking.booking_time}</span>
                   </div>
                   <div className="text-muted text-sm mt-1">
-                    {booking.duration} • {booking.vehicle}
+                    {booking.duration_minutes} min • {booking.vehicle_model}
                   </div>
                 </div>
 
@@ -167,14 +192,15 @@ const SlotBooking = () => {
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     padding: '0.25rem 0.5rem',
+                    textTransform: 'capitalize',
                     borderRadius: '99px',
-                    backgroundColor: booking.status === 'Upcoming' ? 'var(--primary-alpha)' : 'var(--danger-alpha)',
-                    color: booking.status === 'Upcoming' ? 'var(--primary)' : 'var(--danger)'
+                    backgroundColor: booking.status === 'upcoming' ? 'var(--primary-alpha)' : 'var(--danger-alpha)',
+                    color: booking.status === 'upcoming' ? 'var(--primary)' : 'var(--danger)'
                   }}>
-                    {booking.status}
+                    {booking.status.replace('_', '-')}
                   </span>
                   
-                  {booking.status === 'Upcoming' && (
+                  {booking.status === 'upcoming' && (
                     <button 
                       onClick={() => handleCancelBooking(booking.id)}
                       style={{ 

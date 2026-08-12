@@ -9,16 +9,16 @@ const UpiPayment = () => {
   const { id } = useParams(); // sessionId
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('waiting_user'); // waiting_user, paid, failed
-  
+
   // Try to get data from location state first, fallback to fetching
   const stateAmount = location.state?.amount;
   const stateVehicle = location.state?.vehicleModel;
-  
+
   const [sessionDetails, setSessionDetails] = useState({
     amount: stateAmount || 0,
     vehicleModel: stateVehicle || 'Unknown Vehicle',
@@ -56,10 +56,10 @@ const UpiPayment = () => {
   const handlePaid = async () => {
     setVerifying(true);
     setError('');
-    
+
     try {
       const res = await api.post('/payment/demo-verify', { sessionId: id });
-      
+
       if (res.data.success) {
         setStatus('paid');
         fireConfetti();
@@ -111,14 +111,14 @@ const UpiPayment = () => {
   }
 
   // Generate UPI URI
-  const upiUrl = `upi://pay?pa=orionvolt@okaxis&pn=OrionVolt&am=${sessionDetails.amount}&cu=INR&tn=EV+Charging+Payment`;
+  const upiUrl = `upi://pay?pa=orionvolt@axl&pn=OrionVolt&am=${sessionDetails.amount}&cu=INR&tn=EV+Charging+Payment`;
 
   return (
     <div className="page-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '2rem' }}>
-      
+
       {/* Header */}
       <div style={{ width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-        <button 
+        <button
           onClick={() => navigate('/charge')}
           style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center' }}
         >
@@ -130,7 +130,7 @@ const UpiPayment = () => {
 
       {status === 'waiting_user' || status === 'failed' ? (
         <div className="card" style={{ maxWidth: '400px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          
+
           <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Scan with any UPI app</div>
             <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#00C853', lineHeight: '1' }}>
@@ -140,7 +140,7 @@ const UpiPayment = () => {
 
           {/* QR Code Container */}
           <div style={{ background: '#FFFFFF', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-            <QRCodeSVG 
+            <QRCodeSVG
               value={upiUrl}
               size={220}
               fgColor="#1A1A2E"
@@ -151,7 +151,7 @@ const UpiPayment = () => {
 
           <div style={{ fontSize: '0.875rem', color: 'var(--text)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ color: 'var(--text-muted)' }}>UPI ID:</span>
-            <strong>orionvolt@okaxis</strong>
+            <strong>orionvolt@axl</strong>
           </div>
 
           {/* Dummy Apps Icons */}
@@ -166,16 +166,16 @@ const UpiPayment = () => {
           )}
 
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button 
-              className="btn" 
+            <button
+              className="btn"
               style={{ width: '100%', backgroundColor: '#00C853', color: '#000', fontWeight: 'bold' }}
               onClick={handlePaid}
               disabled={verifying}
             >
               {verifying ? 'Verifying...' : 'I have paid'}
             </button>
-            <button 
-              className="btn" 
+            <button
+              className="btn"
               style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}
               onClick={() => navigate('/charge')}
               disabled={verifying}
@@ -193,12 +193,12 @@ const UpiPayment = () => {
       ) : (
         /* Success Screen */
         <div className="card" style={{ maxWidth: '400px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          
+
           <div style={{ marginBottom: '1.5rem', animation: 'scaleIn 0.5s ease-out' }}>
             <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="40" cy="40" r="40" fill="#00C853" fillOpacity="0.2"/>
-              <circle cx="40" cy="40" r="30" fill="#00C853"/>
-              <path d="M30 40L37 47L50 34" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="40" cy="40" r="40" fill="#00C853" fillOpacity="0.2" />
+              <circle cx="40" cy="40" r="30" fill="#00C853" />
+              <path d="M30 40L37 47L50 34" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
 
@@ -207,16 +207,16 @@ const UpiPayment = () => {
             Your charging session has started.
           </p>
 
-          <div style={{ 
-            width: '100%', 
-            backgroundColor: 'var(--input-bg)', 
-            borderRadius: '12px', 
+          <div style={{
+            width: '100%',
+            backgroundColor: 'var(--input-bg)',
+            borderRadius: '12px',
             padding: '1.25rem',
             marginBottom: '2rem',
             textAlign: 'left'
           }}>
             <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text)', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Session Details</h4>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Vehicle</div>
@@ -241,10 +241,10 @@ const UpiPayment = () => {
             </div>
           </div>
 
-          <button 
+          <button
             className="btn btn-primary"
             style={{ width: '100%' }}
-            onClick={() => navigate(`/status/${id}`)}
+            onClick={() => navigate(`/charging/${id}`)}
           >
             View Session Status
           </button>

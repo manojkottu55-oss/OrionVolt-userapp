@@ -492,3 +492,83 @@ select.input-field option:disabled {
 [data-theme="light"] .score-ring-progress {
   stroke: url(#lightGradient) !important;
 }
+
+/* Charging Live Page Animations */
+@keyframes pulse-glow {
+  0% { filter: drop-shadow(0 0 2px rgba(45, 212, 191, 0.5)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 15px rgba(45, 212, 191, 1)); transform: scale(1.1); }
+  100% { filter: drop-shadow(0 0 2px rgba(45, 212, 191, 0.5)); transform: scale(1); }
+}
+
+@keyframes orbit {
+  0% { transform: rotate(0deg) translateX(70px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(70px) rotate(-360deg); }
+}
+
+.energy-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2DD4BF;
+  box-shadow: 0 0 10px #2DD4BF;
+  top: 50%;
+  left: 50%;
+  margin-top: -4px;
+  margin-left: -4px;
+}
+
+.glow-card {
+  box-shadow: 0 0 15px rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+}
+
+.glow-card.interrupted {
+  box-shadow: 0 0 15px rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.glow-card.completed {
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+@keyframes rotate-glow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.energy-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer-sweep 2s infinite linear;
+}
+
+.stop-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #0A101E;
+  color: #F87171;
+  border: 1px solid #F87171;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stop-btn-pill:hover {
+  background-color: #F87171;
+  color: white;
+}
