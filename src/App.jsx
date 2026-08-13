@@ -24,8 +24,7 @@ import GreenScore from './pages/GreenScore';
 import Settings from './pages/Settings';
 import ClickSpark from './components/ClickSpark';
 
-// Stubs for upcoming pages
-const Support = () => <div style={{ padding: '2rem' }}>Support (Coming Soon)</div>;
+import Support from './pages/Support';
 
 // Auth guard — uses Supabase session from AuthContext
 const RequireAuth = ({ children }) => {
