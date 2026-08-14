@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { Zap, AlertTriangle, CheckCircle, Battery, Activity, Power, Clock, StopCircle, PlayCircle, Square } from 'lucide-react';
+import { Zap, AlertTriangle, CheckCircle, Battery, Activity, Power, Clock, StopCircle, PlayCircle, Square, Loader2, SquareX } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const ChargingLive = () => {
@@ -13,12 +13,21 @@ const ChargingLive = () => {
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [hasCelebrated, setHasCelebrated] = useState(false);
+  const [errorToast, setErrorToast] = useState('');
+
+  // Summary shown after manual stop
+  const [stoppedSummary, setStoppedSummary] = useState(null);
   
   // Local timer state
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   
   const pollIntervalRef = useRef(null);
   const timerIntervalRef = useRef(null);
+
+  const showError = (msg) => {
+    setErrorToast(msg);
+    setTimeout(() => setErrorToast(''), 4000);
+  };
 
   const fetchStatus = async () => {
     try {
@@ -66,7 +75,7 @@ const ChargingLive = () => {
     };
   }, [session?.status]);
 
-  // Prevent Navigation
+  // Prevent Navigation while charging
   useEffect(() => {
     const isCharging = session?.status === 'active' || session?.status === 'charging';
     
@@ -119,11 +128,24 @@ const ChargingLive = () => {
   const handleStop = async () => {
     setActionLoading(true);
     try {
-      await api.post(`/sessions/${sessionId}/stop`);
-      await fetchStatus();
-      setShowStopConfirm(false);
+      const res = await api.post(`/sessions/${sessionId}/stop`);
+      if (res.data.success) {
+        // Stop all polling + timers — session is now frozen
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+
+        setShowStopConfirm(false);
+        setStoppedSummary(res.data.summary);
+
+        // Re-fetch one last time to lock ring/stats at final values
+        await fetchStatus();
+      } else {
+        throw new Error(res.data.error || 'Stop failed');
+      }
     } catch (err) {
       console.error('Failed to stop charging:', err);
+      showError('Failed to stop charging — please try again.');
+      // Keep modal open so user can retry
     } finally {
       setActionLoading(false);
     }
@@ -168,23 +190,24 @@ const ChargingLive = () => {
   }
 
   const isCharging = session.status === 'active' || session.status === 'charging';
-  const isInterrupted = session.status === 'interrupted' || session.status === 'stopped_manual' || session.status === 'stopped_safety';
+  // DB CHECK constraint only allows: 'active' | 'completed' | 'interrupted'
+  // A manual stop stores status='interrupted', interrupted_reason='manual_stop'
+  const isInterrupted = session.status === 'interrupted';
+  const isManualStop = isInterrupted && session.interruptedReason === 'manual_stop';
   const isCompleted = session.status === 'completed';
+  // After a manual stop, stoppedSummary is set and we freeze the view
+  const isStopped = !!stoppedSummary;
 
   const progressPercentage = Math.min(100, Math.max(0, (session.energyDeliveredKwh / session.targetEnergyKwh) * 100));
   
   // SVG Ring calculation
   const radius = 110;
   const circumference = 2 * Math.PI * radius;
-  // Offset calculated from progress
   const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
-
-  let themeClass = 'glow-card';
-  if (isInterrupted) themeClass = 'glow-card interrupted';
-  if (isCompleted) themeClass = 'glow-card completed';
 
   return (
     <div className="page-content" style={{ display: 'flex', flexDirection: 'column', padding: '1rem', paddingBottom: '6rem' }}>
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
       
       {/* Session Info Strip */}
       <div style={{ 
@@ -204,8 +227,8 @@ const ChargingLive = () => {
       {/* Main Animation Area */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem', position: 'relative' }}>
         
-        {/* Rotating Sci-Fi Glow */}
-        {isCharging && (
+        {/* Rotating Sci-Fi Glow (only while live charging) */}
+        {isCharging && !isStopped && (
           <div style={{
             position: 'absolute',
             width: '280px',
@@ -225,21 +248,11 @@ const ChargingLive = () => {
               </linearGradient>
             </defs>
             {/* Background Ring */}
-            <circle
-              cx="125"
-              cy="125"
-              r={radius}
-              fill="transparent"
-              stroke="rgba(255,255,255,0.05)"
-              strokeWidth="16"
-            />
+            <circle cx="125" cy="125" r={radius} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="16" />
             {/* Progress Ring */}
             <circle
-              cx="125"
-              cy="125"
-              r={radius}
-              fill="transparent"
-              stroke={isInterrupted ? '#F87171' : isCompleted ? '#FBBF24' : "url(#ringGradient)"}
+              cx="125" cy="125" r={radius} fill="transparent"
+              stroke={isStopped ? '#F59E0B' : isInterrupted ? '#F87171' : isCompleted ? '#FBBF24' : "url(#ringGradient)"}
               strokeWidth="16"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -250,25 +263,27 @@ const ChargingLive = () => {
           
           {/* Inner Content */}
           <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {isInterrupted ? (
-               <AlertTriangle size={32} color="#F87171" style={{ marginBottom: '0.5rem' }} />
+            {isStopped ? (
+              <SquareX size={32} color="#F59E0B" style={{ marginBottom: '0.5rem' }} />
+            ) : isInterrupted ? (
+              <AlertTriangle size={32} color="#F87171" style={{ marginBottom: '0.5rem' }} />
             ) : isCompleted ? (
-               <CheckCircle size={32} color="#FBBF24" style={{ marginBottom: '0.5rem' }} />
+              <CheckCircle size={32} color="#FBBF24" style={{ marginBottom: '0.5rem' }} />
             ) : (
-               <Zap size={32} color="#4ADE80" style={{ animation: 'pulse-glow 1.5s infinite', marginBottom: '0.5rem' }} />
+              <Zap size={32} color="#4ADE80" style={{ animation: 'pulse-glow 1.5s infinite', marginBottom: '0.5rem' }} />
             )}
             <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--text-light)', lineHeight: '1' }}>
               {Math.floor(progressPercentage)}%
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {isCompleted ? 'Complete' : isInterrupted ? 'Interrupted' : 'Charging...'}
+              {isStopped ? 'Stopped' : isCompleted ? 'Complete' : isInterrupted ? 'Interrupted' : 'Charging...'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Interruption Banner */}
-      {isInterrupted && (
+      {/* Interruption Banner (only if interrupted without summary) */}
+      {isInterrupted && !isStopped && (
         <div style={{ backgroundColor: 'rgba(248, 113, 113, 0.1)', border: '1px solid rgba(248, 113, 113, 0.3)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
           <h4 style={{ color: '#F87171', margin: '0 0 0.5rem 0' }}>⚠️ Charging Stopped</h4>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-main)', margin: 0 }}>
@@ -277,7 +292,7 @@ const ChargingLive = () => {
         </div>
       )}
 
-      {/* STATS SECTION REDESIGN */}
+      {/* STATS SECTION */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
         
         {/* Row 1 */}
@@ -322,16 +337,15 @@ const ChargingLive = () => {
           </div>
           <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ 
-              position: 'absolute',
-              top: 0, left: 0,
+              position: 'absolute', top: 0, left: 0,
               width: `${progressPercentage}%`, 
               height: '100%', 
-              background: isInterrupted ? '#F87171' : isCompleted ? '#FBBF24' : 'linear-gradient(90deg, #2DD4BF, #4ADE80)',
+              background: isStopped ? '#F59E0B' : isInterrupted ? '#F87171' : isCompleted ? '#FBBF24' : 'linear-gradient(90deg, #2DD4BF, #4ADE80)',
               transition: 'width 1s linear',
               borderRadius: '6px',
               overflow: 'hidden'
             }}>
-               {isCharging && <div className="energy-shimmer"></div>}
+              {isCharging && !isStopped && <div className="energy-shimmer"></div>}
             </div>
           </div>
         </div>
@@ -343,7 +357,7 @@ const ChargingLive = () => {
             <div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Est. Remaining</div>
               <div style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text-light)' }}>
-                {isCompleted ? '0 mins' : formatTime(remainingSeconds)}
+                {isCompleted || isStopped ? '0 mins' : formatTime(remainingSeconds)}
               </div>
             </div>
           </div>
@@ -360,45 +374,131 @@ const ChargingLive = () => {
 
       </div>
 
-      {/* Action Buttons */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', padding: '1rem', backgroundColor: 'var(--bg-dark)', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: '600px', display: 'flex', justifyContent: 'center' }}>
-          {isCharging && (
-            <button 
-              className="stop-btn-pill" 
-              onClick={() => setShowStopConfirm(true)}
-              disabled={actionLoading}
-            >
-              <Square fill="currentColor" size={16} />
-              Stop Charging
-            </button>
-          )}
+      {/* ── STOPPED SUMMARY CARD ── */}
+      {isStopped && (
+        <div style={{
+          backgroundColor: '#1A1500',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          borderRadius: '20px',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SquareX size={22} color="#F59E0B" />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, color: '#F59E0B', fontSize: '1.1rem', fontWeight: 700 }}>⏹ Charging Stopped</h3>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Session ended manually — summary below</p>
+            </div>
+          </div>
 
-          {isInterrupted && (
-            <button 
-              className="btn" 
-              style={{ width: '100%', backgroundColor: '#4ADE80', color: '#000', fontSize: '1.1rem', padding: '1rem' }}
-              onClick={handleResume}
-              disabled={actionLoading}
-            >
-              <PlayCircle size={20} />
-              Resume Charging
-            </button>
-          )}
+          {/* Summary rows */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {[
+              { label: 'Energy Delivered', value: `${stoppedSummary.energyDeliveredKwh.toFixed(2)} kWh`, color: '#3B82F6' },
+              { label: 'Duration', value: `${stoppedSummary.durationMinutes} min${stoppedSummary.durationMinutes !== 1 ? 's' : ''}`, color: 'var(--text-light)' },
+              { label: 'Amount Charged', value: `₹${stoppedSummary.finalCost.toFixed(2)}`, color: 'var(--text-light)' },
+              { label: 'Amount Paid (Upfront)', value: `₹${stoppedSummary.amountPaid.toFixed(2)}`, color: 'var(--text-muted)' },
+            ].map(row => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{row.label}</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: 600, color: row.color }}>{row.value}</span>
+              </div>
+            ))}
 
-          {isCompleted && (
-            <button 
-              className="btn" 
-              style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-light)', fontSize: '1.1rem', padding: '1rem' }}
-              onClick={() => navigate('/history')}
-            >
-              View Receipt & History
-            </button>
-          )}
+            {/* Refund row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Refund Amount</span>
+              {stoppedSummary.refundAmount > 0 ? (
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#4ADE80' }}>
+                  ₹{stoppedSummary.refundAmount.toFixed(2)}
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No refund due</span>
+              )}
+            </div>
+
+            {/* Refund status chip */}
+            {stoppedSummary.refundAmount > 0 && (
+              <div style={{
+                marginTop: '0.25rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: 'rgba(74, 222, 128, 0.07)',
+                border: '1px solid rgba(74, 222, 128, 0.2)',
+                borderRadius: '10px',
+                fontSize: '0.82rem',
+                color: '#4ADE80',
+              }}>
+                ✅ Refund Processing — usually takes 5–7 business days
+              </div>
+            )}
+          </div>
+
+          {/* Back to Home button */}
+          <button
+            className="btn"
+            style={{
+              marginTop: '1.5rem',
+              width: '100%',
+              backgroundColor: '#2DD4BF',
+              color: '#000',
+              fontWeight: 700,
+              fontSize: '1rem',
+              padding: '0.9rem',
+              borderRadius: '14px',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            onClick={() => navigate('/charge')}
+          >
+            Back to Home
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* Custom Bottom Sheet / Modal */}
+      {/* Action Buttons (only when NOT showing stopped summary) */}
+      {!isStopped && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', padding: '1rem', backgroundColor: 'var(--bg-dark)', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: '100%', maxWidth: '600px', display: 'flex', justifyContent: 'center' }}>
+            {isCharging && (
+              <button 
+                className="stop-btn-pill" 
+                onClick={() => setShowStopConfirm(true)}
+                disabled={actionLoading}
+              >
+                <Square fill="currentColor" size={16} />
+                Stop Charging
+              </button>
+            )}
+
+            {isInterrupted && (
+              <button 
+                className="btn" 
+                style={{ width: '100%', backgroundColor: '#4ADE80', color: '#000', fontSize: '1.1rem', padding: '1rem' }}
+                onClick={handleResume}
+                disabled={actionLoading}
+              >
+                <PlayCircle size={20} />
+                Resume Charging
+              </button>
+            )}
+
+            {isCompleted && (
+              <button 
+                className="btn" 
+                style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-light)', fontSize: '1.1rem', padding: '1rem' }}
+                onClick={() => navigate('/history')}
+              >
+                View Receipt &amp; History
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Stop Confirmation Modal */}
       {showStopConfirm && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem', animation: 'fadeIn 0.2s ease-out' }}>
           <div className="card" style={{ width: '100%', maxWidth: '360px', backgroundColor: '#131B2E', borderRadius: '24px', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
@@ -413,11 +513,14 @@ const ChargingLive = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
                 <button 
                   className="btn" 
-                  style={{ width: '100%', backgroundColor: '#F87171', color: 'white', borderRadius: '12px' }}
+                  style={{ width: '100%', backgroundColor: '#F87171', color: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', opacity: actionLoading ? 0.7 : 1 }}
                   onClick={handleStop}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Stopping...' : 'Yes, Stop Charging'}
+                  {actionLoading
+                    ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Stopping...</>
+                    : 'Yes, Stop Charging'
+                  }
                 </button>
                 <button 
                   className="btn btn-outline" 
@@ -430,6 +533,22 @@ const ChargingLive = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {errorToast && (
+        <div style={{
+          position: 'fixed', bottom: '5rem', left: '50%', transform: 'translateX(-50%)',
+          backgroundColor: '#1F1010', border: '1px solid #F87171',
+          borderRadius: '12px', padding: '0.9rem 1.4rem',
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)', zIndex: 2000,
+          animation: 'fadeIn 0.2s ease',
+          whiteSpace: 'nowrap',
+        }}>
+          <AlertTriangle size={18} color="#F87171" />
+          <span style={{ color: '#F87171', fontWeight: 500, fontSize: '0.9rem' }}>{errorToast}</span>
         </div>
       )}
     </div>

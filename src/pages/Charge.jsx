@@ -35,7 +35,7 @@ const Charge = () => {
   const [calculationResult, setCalculationResult] = useState(null);
 
   const [form, setForm] = useState({
-    kioskId: 'KSK001',
+    kioskId: 'KS001',       // Real ESP32 prototype kiosk ID
     vehicleType: '',
     company: '',
     vehicleId: '',

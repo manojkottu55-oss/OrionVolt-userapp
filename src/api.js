@@ -30,7 +30,7 @@ const MOCK_DATA = {
     success: true,
     session: {
       sessionId: 'DEMO-SESSION-001',
-      kioskId: 'KSK001',
+      kioskId: 'KS001',
       status: 'pending',
       vehicleType: '2_wheeler',
       estimatedAmount: 120,
@@ -49,7 +49,7 @@ const MOCK_DATA = {
     sessions: [
       {
         _id: '1',
-        kioskId: 'KSK001',
+        kioskId: 'KS001',
         status: 'completed',
         energyDispensed: 3.45,
         estimatedAmount: 120,
@@ -93,7 +93,7 @@ function getMockResponse(url, method) {
         success: true,
         session: {
           sessionId: 'DEMO-SESSION-001',
-          kioskId: 'KSK001',
+          kioskId: 'KS001',
           status: 'completed',
           vehicleType: '2_wheeler',
           estimatedAmount: 120,
