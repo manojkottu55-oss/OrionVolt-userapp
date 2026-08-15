@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { KioskProvider } from './context/KioskContext';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -96,15 +97,17 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <ThemeProvider>
-          <ClickSpark sparkColor="#fafafa" sparkSize={10} sparkRadius={15} sparkCount={7} duration={400}>
-            <AppRoutes />
-          </ClickSpark>
-        </ThemeProvider>
-      </ProfileProvider>
-    </AuthProvider>
+    <KioskProvider>
+      <AuthProvider>
+        <ProfileProvider>
+          <ThemeProvider>
+            <ClickSpark sparkColor="#fafafa" sparkSize={10} sparkRadius={15} sparkCount={7} duration={400}>
+              <AppRoutes />
+            </ClickSpark>
+          </ThemeProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </KioskProvider>
   );
 }
 

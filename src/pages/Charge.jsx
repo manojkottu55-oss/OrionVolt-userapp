@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Zap, Banknote, Percent, BatteryFull, CheckCircle } from 'lucide-react';
 import api from '../api';
 import { useProfile } from '../context/ProfileContext';
+import { useKiosk } from '../context/KioskContext';
 
 const ModeCard = ({ title, subtitle, icon, selected, onClick }) => (
   <div
@@ -26,6 +27,7 @@ const ModeCard = ({ title, subtitle, icon, selected, onClick }) => (
 const Charge = () => {
   const navigate = useNavigate();
   const { vehicles: userVehicles } = useProfile();
+  const { kioskId: contextKioskId } = useKiosk(); // null if normal web visit
   
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
@@ -35,7 +37,7 @@ const Charge = () => {
   const [calculationResult, setCalculationResult] = useState(null);
 
   const [form, setForm] = useState({
-    kioskId: 'KS001',       // Real ESP32 prototype kiosk ID
+    kioskId: contextKioskId || 'KS001',  // kiosk scan overrides default
     vehicleType: '',
     company: '',
     vehicleId: '',
@@ -44,6 +46,13 @@ const Charge = () => {
     currentBatteryPct: '',
     targetBatteryPct: ''
   });
+
+  // Keep form.kioskId in sync if context loads after mount
+  useEffect(() => {
+    if (contextKioskId) {
+      setForm(prev => ({ ...prev, kioskId: contextKioskId }));
+    }
+  }, [contextKioskId]);
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -57,7 +66,17 @@ const Charge = () => {
       }
     };
     fetchVehicles();
-  }, []);
+
+    // Fire the "user connected" ping to the kiosk display — only in kiosk mode
+    const activeKioskId = contextKioskId || form.kioskId;
+    if (activeKioskId) {
+      api.post(`/kiosk/${activeKioskId}/connected`).catch(err => {
+        // Non-fatal — kiosk display ping should never break the charge page
+        console.warn('Kiosk connected ping failed:', err?.response?.data?.error || err.message);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // Pre-fill default vehicle if available
   useEffect(() => {
