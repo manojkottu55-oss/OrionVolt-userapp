@@ -375,7 +375,7 @@ const ChargingLive = () => {
       </div>
 
       {/* ── STOPPED SUMMARY CARD ── */}
-      {isStopped && (
+      {(isStopped || isCompleted || isManualStop) && (
         <div style={{
           backgroundColor: '#1A1500',
           border: '1px solid rgba(245, 158, 11, 0.3)',
@@ -389,18 +389,18 @@ const ChargingLive = () => {
               <SquareX size={22} color="#F59E0B" />
             </div>
             <div>
-              <h3 style={{ margin: 0, color: '#F59E0B', fontSize: '1.1rem', fontWeight: 700 }}>⏹ Charging Stopped</h3>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Session ended manually — summary below</p>
+              <h3 style={{ margin: 0, color: '#F59E0B', fontSize: '1.1rem', fontWeight: 700 }}>
+                {isCompleted ? '✅ Charging Complete' : '⏹ Charging Stopped'}
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Session has ended — summary below</p>
             </div>
           </div>
 
           {/* Summary rows */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {[
-              { label: 'Energy Delivered', value: `${stoppedSummary.energyDeliveredKwh.toFixed(2)} kWh`, color: '#3B82F6' },
-              { label: 'Duration', value: `${stoppedSummary.durationMinutes} min${stoppedSummary.durationMinutes !== 1 ? 's' : ''}`, color: 'var(--text-light)' },
-              { label: 'Amount Charged', value: `₹${stoppedSummary.finalCost.toFixed(2)}`, color: 'var(--text-light)' },
-              { label: 'Amount Paid (Upfront)', value: `₹${stoppedSummary.amountPaid.toFixed(2)}`, color: 'var(--text-muted)' },
+              { label: 'Energy Delivered', value: `${(stoppedSummary?.energyDeliveredKwh || session.energyDeliveredKwh || 0).toFixed(2)} kWh`, color: '#3B82F6' },
+              { label: 'Amount Charged', value: `₹${(stoppedSummary?.finalCost || parseFloat(session.costSoFar) || 0).toFixed(2)}`, color: 'var(--text-light)' },
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{row.label}</span>
@@ -408,31 +408,48 @@ const ChargingLive = () => {
               </div>
             ))}
 
-            {/* Refund row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Refund Amount</span>
-              {stoppedSummary.refundAmount > 0 ? (
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#4ADE80' }}>
-                  ₹{stoppedSummary.refundAmount.toFixed(2)}
-                </span>
-              ) : (
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No refund due</span>
-              )}
-            </div>
+            {stoppedSummary && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Duration</span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-light)' }}>
+                    {stoppedSummary.durationMinutes} min{stoppedSummary.durationMinutes !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Amount Paid (Upfront)</span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                    ₹{stoppedSummary.amountPaid.toFixed(2)}
+                  </span>
+                </div>
 
-            {/* Refund status chip */}
-            {stoppedSummary.refundAmount > 0 && (
-              <div style={{
-                marginTop: '0.25rem',
-                padding: '0.75rem 1rem',
-                backgroundColor: 'rgba(74, 222, 128, 0.07)',
-                border: '1px solid rgba(74, 222, 128, 0.2)',
-                borderRadius: '10px',
-                fontSize: '0.82rem',
-                color: '#4ADE80',
-              }}>
-                ✅ Refund Processing — usually takes 5–7 business days
-              </div>
+                {/* Refund row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Refund Amount</span>
+                  {stoppedSummary.refundAmount > 0 ? (
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#4ADE80' }}>
+                      ₹{stoppedSummary.refundAmount.toFixed(2)}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No refund due</span>
+                  )}
+                </div>
+
+                {/* Refund status chip */}
+                {stoppedSummary.refundAmount > 0 && (
+                  <div style={{
+                    marginTop: '0.25rem',
+                    padding: '0.75rem 1rem',
+                    backgroundColor: 'rgba(74, 222, 128, 0.07)',
+                    border: '1px solid rgba(74, 222, 128, 0.2)',
+                    borderRadius: '10px',
+                    fontSize: '0.82rem',
+                    color: '#4ADE80',
+                  }}>
+                    ✅ Refund Processing — usually takes 5–7 business days
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -459,12 +476,13 @@ const ChargingLive = () => {
       )}
 
       {/* Action Buttons (only when NOT showing stopped summary) */}
-      {!isStopped && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', padding: '1rem', backgroundColor: 'var(--bg-dark)', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'center' }}>
+      {!(isStopped || isCompleted || isManualStop) && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', padding: '1rem', backgroundColor: 'var(--bg-dark)', zIndex: 100, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: '600px', display: 'flex', justifyContent: 'center' }}>
             {isCharging && (
               <button 
-                className="stop-btn-pill" 
+                className="btn" 
+                style={{ width: '100%', backgroundColor: '#ef4444', color: 'white', fontWeight: 'bold', fontSize: '1.1rem', padding: '1rem', borderRadius: '12px' }}
                 onClick={() => setShowStopConfirm(true)}
                 disabled={actionLoading}
               >
@@ -473,7 +491,7 @@ const ChargingLive = () => {
               </button>
             )}
 
-            {isInterrupted && (
+            {isInterrupted && !isManualStop && (
               <button 
                 className="btn" 
                 style={{ width: '100%', backgroundColor: '#4ADE80', color: '#000', fontSize: '1.1rem', padding: '1rem' }}
@@ -482,16 +500,6 @@ const ChargingLive = () => {
               >
                 <PlayCircle size={20} />
                 Resume Charging
-              </button>
-            )}
-
-            {isCompleted && (
-              <button 
-                className="btn" 
-                style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-light)', fontSize: '1.1rem', padding: '1rem' }}
-                onClick={() => navigate('/history')}
-              >
-                View Receipt &amp; History
               </button>
             )}
           </div>
