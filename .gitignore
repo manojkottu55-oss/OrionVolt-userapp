@@ -22,4 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
+.envgit rm --cached .env
+
+git add .
+
+git commit -m "remove env from tracking"
+
+git push origin main

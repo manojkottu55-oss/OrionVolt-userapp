@@ -294,15 +294,33 @@ const Charge = () => {
 
             {/* Dynamic Inputs based on selected mode */}
             {form.chargingMode === 'amount' && (
-              <div className="input-group">
-                <label className="input-label">Amount (₹)</label>
-                <input
-                  type="number"
-                  className="input-field"
-                  placeholder="Enter amount (e.g. 150)"
-                  value={form.amount}
-                  onChange={e => setForm({ ...form, amount: e.target.value })}
-                />
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div className="input-group" style={{ flex: '1 1 120px' }}>
+                  <label className="input-label">Amount (₹)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    placeholder="Enter amount (e.g. 150)"
+                    value={form.amount}
+                    onChange={e => {
+                      setForm({ ...form, amount: e.target.value });
+                      setCalculationResult(null);
+                    }}
+                  />
+                </div>
+                <div className="input-group" style={{ flex: '1 1 120px' }}>
+                  <label className="input-label">Current Battery % (Optional)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    placeholder="e.g. 20"
+                    value={form.currentBatteryPct}
+                    onChange={e => {
+                      setForm({ ...form, currentBatteryPct: e.target.value });
+                      setCalculationResult(null);
+                    }}
+                  />
+                </div>
               </div>
             )}
 
