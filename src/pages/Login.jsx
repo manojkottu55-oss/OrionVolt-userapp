@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isMissing } from '../supabase';
 import { Smartphone, AlertTriangle } from 'lucide-react';
+import ParticleText from '../components/ParticleText';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -10,6 +11,15 @@ const Login = () => {
   const [step, setStep] = useState(1); // 1 = enter phone, 2 = enter OTP
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 600);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ── Missing credentials fallback ──
   if (isMissing) {
@@ -115,7 +125,54 @@ const Login = () => {
 
   return (
     <div className="page-content">
-      <h1 className="text-center mb-4">Welcome</h1>
+      {isMobile ? (
+        <>
+          <style>
+            {`
+              @keyframes fadeSlideIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+            `}
+          </style>
+          <h1
+            className="text-center mb-4"
+            style={{
+              fontSize: 'clamp(1.5rem, 7vw, 2rem)',
+              background: 'linear-gradient(to right, #E7EAF0, #4ADE80)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+              animation: 'fadeSlideIn 0.6s ease-out forwards',
+              fontWeight: 800,
+            }}
+          >
+            Welcome to OrionVolt
+          </h1>
+        </>
+      ) : (
+        <div style={{ width: '100%', height: 140, background: 'transparent', padding: '0 16px' }}>
+          <ParticleText
+            text="Welcome to OrionVolt"
+            particleSize={2}
+            density={4}
+            color="#E7EAF0"
+            highlightColor="#4ADE80"
+            scatter={160}
+            gatherDuration={1400}
+            stagger={350}
+            pointerRepel={35}
+            repelRadius={100}
+            idleDrift={0.6}
+            trigger="mount"
+            fontSize="clamp(1.1rem, 5.5vw, 2.4rem)"
+            fontWeight={800}
+            fontFamily="inherit"
+            glow
+          />
+        </div>
+      )}
       <p className="subtitle text-center mb-8">Sign in to start charging your EV.</p>
 
       <div className="card">
