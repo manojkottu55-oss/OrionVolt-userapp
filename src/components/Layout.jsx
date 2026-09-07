@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Zap, BatteryCharging, History, CreditCard, RotateCcw, MessageSquare, User, HelpCircle, LogOut, Calendar, Leaf, Menu, X, Settings, Moon, Sun } from 'lucide-react';
+import { Zap, BatteryCharging, History, CreditCard, RotateCcw, MessageSquare, User, HelpCircle, LogOut, Calendar, Leaf, Menu, X, Settings, Moon, Sun, Map } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import './Layout.css';
 
@@ -17,6 +17,7 @@ const Layout = () => {
   const navItems = [
     { to: '/charge', icon: <BatteryCharging size={24} />, label: 'Charge' },
     { to: '/slot-booking', icon: <Calendar size={24} />, label: 'Slot Booking' },
+    { to: '/kiosk-map', icon: <Map size={24} />, label: 'Kiosk Map' },
     { 
       to: '/green-score', 
       icon: <Leaf size={24} color="#00e676" />, 

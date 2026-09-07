@@ -21,6 +21,8 @@ import Feedback from './pages/Feedback';
 import Profile from './pages/Profile';
 import CompleteProfile from './pages/CompleteProfile';
 import SlotBooking from './pages/SlotBooking';
+import SlotBookingPayment from './pages/SlotBookingPayment';
+import KioskMapPage from './pages/KioskMapPage';
 import GreenScore from './pages/GreenScore';
 import Settings from './pages/Settings';
 import ClickSpark from './components/ClickSpark';
@@ -73,6 +75,8 @@ function AppRoutes() {
           <Route element={<RequireProfile><Outlet /></RequireProfile>}>
             <Route path="/charge" element={<Charge />} />
             <Route path="/slot-booking" element={<SlotBooking />} />
+            <Route path="/slot-booking/pay/:bookingId" element={<SlotBookingPayment />} />
+            <Route path="/kiosk-map" element={<KioskMapPage />} />
             <Route path="/green-score" element={<GreenScore />} />
             <Route path="/history" element={<History />} />
             <Route path="/payments" element={<Payments />} />
